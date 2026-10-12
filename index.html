@@ -146,6 +146,11 @@
     function renderCategories(target){$(target).innerHTML=Object.entries(data).map(([name,item])=>`<button class="category ${name===subject?"selected":""}" data-subject="${name}"><span class="icon">${item.icon}</span><h3>${name}</h3><p>${item.desc}</p></button>`).join("");$(target).querySelectorAll("[data-subject]").forEach(b=>b.onclick=()=>{subject=b.dataset.subject;renderCategories("category-grid");renderFacts();renderCategories("quiz-categories")})}
     function renderFacts(){$("facts").innerHTML=data[subject].facts.map((fact,i)=>`<article class="fact"><b>${i+1}</b><div><strong>${fact}</strong><p>Remember this for your next challenge.</p></div></article>`).join("")}
     function renderLevels(){$("levels").innerHTML=Object.entries(levels).map(([name,item])=>`<button class="level ${name===level?"selected":""}" data-level="${name}"><h3>${name} ${name==="Beginner"?"🌱":name==="Explorer"?"🧭":"🧠"}</h3><p>${item.desc}</p></button>`).join("");$("levels").querySelectorAll("[data-level]").forEach(b=>b.onclick=()=>{level=b.dataset.level;renderLevels()})}
+    function shuffleQuestion(question){
+      const options=question[1].map((text,index)=>({text,isCorrect:index===question[2]}));
+      for(let i=options.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[options[i],options[j]]=[options[j],options[i]]}
+      return [question[0],options.map(option=>option.text),options.findIndex(option=>option.isCorrect)];
+    }
     function begin(){
       const beginnerPool=[...data[subject].questions,...extras[subject].slice(0,7)];
       const explorerPool=[...advanced[subject].Explorer,...extras[subject].slice(3,10)];
@@ -155,7 +160,7 @@
       let seen=JSON.parse(localStorage.getItem(historyKey)||"[]");
       let unseen=pool.filter(item=>!seen.includes(item[0]));
       if(unseen.length<10){seen=[];unseen=[...pool]}
-      round=unseen.sort(()=>Math.random()-.5).slice(0,10);
+      round=unseen.sort(()=>Math.random()-.5).slice(0,10).map(shuffleQuestion);
       seen=[...seen,...round.map(item=>item[0])];
       localStorage.setItem(historyKey,JSON.stringify(seen));
       index=0;score=0;botScore=0;botChoice=-1;botCorrect=false;locked=false;$("setup").classList.add("hidden");$("result").classList.add("hidden");$("quiz-play").classList.remove("hidden");renderQuestion()
