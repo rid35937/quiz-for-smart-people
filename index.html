@@ -165,7 +165,7 @@
       localStorage.setItem(historyKey,JSON.stringify(seen));
       index=0;score=0;botScore=0;botChoice=-1;botCorrect=false;locked=false;$("setup").classList.add("hidden");$("result").classList.add("hidden");$("quiz-play").classList.remove("hidden");renderQuestion()
     }
-    function botAccuracy(){const levelBonus={Beginner:0,Explorer:.04,Genius:.08}[level];return Math.min(.22+index*.07+levelBonus,.95)}
+    function botAccuracy(){const levelBonus={Beginner:0,Explorer:.06,Genius:.12}[level];return Math.min(.72+index*.03+levelBonus,.98)}
     function stopTimer(){if(timerId!==null){clearInterval(timerId);timerId=null}}
     function updateTimer(){const fill=$("timer-fill"),row=document.querySelector(".timer-row");$("timer-label").textContent=`${timeLeft}s`;fill.style.width=`${timeLeft/20*100}%`;fill.classList.toggle("urgent",timeLeft<=5);row.classList.toggle("urgent",timeLeft<=5)}
     function startTimer(){stopTimer();timeLeft=20;updateTimer();timerId=setInterval(()=>{timeLeft--;updateTimer();if(timeLeft<=0){stopTimer();answer(-1,null,true)}},1000)}
