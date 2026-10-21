@@ -1,4 +1,4 @@
-const CACHE_NAME = "smart-quiz-v6";
+const CACHE_NAME = "smart-quiz-v7";
 const APP_FILES = [
   "./",
   "./index.html",
