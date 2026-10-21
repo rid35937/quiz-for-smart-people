@@ -40,7 +40,7 @@
     </section>
 
     <section id="quiz" class="panel view">
-      <div id="setup"><p class="eyebrow">Choose your challenge</p><h2>Pick a subject and level</h2><div id="quiz-categories" class="grid"></div><div id="levels" class="grid"></div><button class="button" id="begin">Begin quiz →</button></div>
+      <div id="setup"><p class="eyebrow">Choose your challenge</p><h2>Pick a subject and level</h2><p class="muse-intro">Each round has 50 questions. The question bank shuffles and cycles after all available questions have appeared.</p><div id="quiz-categories" class="grid"></div><div id="levels" class="grid"></div><button class="button" id="begin">Begin 50-question quiz →</button></div>
       <div id="quiz-play" class="hidden"><div class="quiz-head"><span id="counter"></span><span id="quiz-score"></span></div><div class="track"><div class="fill" id="fill"></div></div><div class="timer-row"><span>Time left</span><span id="timer-label">3s</span></div><div class="timer-track" role="timer" aria-label="Time remaining"><div class="timer-fill" id="timer-fill"></div></div><div class="bot-card" aria-live="polite"><span class="bot-avatar" aria-hidden="true">🤖</span><div class="bot-info"><div class="bot-top"><span>Robo Rival</span><span id="bot-score">0 pts</span></div><div class="bot-meter" aria-label="Robot difficulty increases as you play"><div class="bot-meter-fill" id="bot-meter-fill"></div></div><p class="bot-feedback" id="bot-feedback">Robot is warming up…</p></div></div><span class="tag" id="quiz-subject"></span><h2 class="question" id="question"></h2><div class="choices" id="choices"></div><p class="feedback" id="feedback" aria-live="polite"></p><div class="quiz-actions"><button class="button hidden" id="next">Next question →</button></div></div>
       <div id="result" class="hidden reward"><span class="reward-icon" id="result-icon">🏆</span><p class="eyebrow">Level complete</p><h2 id="result-title"></h2><p id="result-copy" class="lead"></p><button class="button" id="again">Try another level →</button></div>
     </section>
@@ -152,6 +152,29 @@
       for(let i=options.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[options[i],options[j]]=[options[j],options[i]]}
       return [question[0],options.map(option=>option.text),options.findIndex(option=>option.isCorrect)];
     }
+    const questionsPerRound=50;
+    function shuffleItems(items){return [...items].sort(()=>Math.random()-.5)}
+    function buildRound(pool,seen){
+      const uniquePool=[...new Map(pool.map(question=>[question[0],question])).values()];
+      let available=uniquePool.filter(question=>!seen.includes(question[0]));
+      if(available.length===0){seen.length=0;available=[...uniquePool]}
+      const roundQuestions=[];
+      while(roundQuestions.length<questionsPerRound){
+        let cycle=shuffleItems(available);
+        if(cycle.length>1&&roundQuestions.length&&cycle[0][0]===roundQuestions[roundQuestions.length-1][0]){
+          [cycle[0],cycle[1]]=[cycle[1],cycle[0]];
+        }
+        const take=cycle.slice(0,questionsPerRound-roundQuestions.length);
+        roundQuestions.push(...take);
+        take.forEach(question=>{if(!seen.includes(question[0]))seen.push(question[0])});
+        available=cycle.slice(take.length);
+        if(available.length===0){
+          seen.length=0;
+          available=[...uniquePool];
+        }
+      }
+      return roundQuestions.map(shuffleQuestion);
+    }
     function begin(){
       const beginnerPool=[...data[subject].questions,...extras[subject].slice(0,7)];
       const explorerPool=[...advanced[subject].Explorer,...extras[subject].slice(3,10)];
@@ -159,10 +182,7 @@
       const pool=level==="Beginner"?beginnerPool:level==="Explorer"?explorerPool:geniusPool;
       const historyKey=`quiz-seen-${subject}-${level}`;
       let seen=JSON.parse(localStorage.getItem(historyKey)||"[]");
-      let unseen=pool.filter(item=>!seen.includes(item[0]));
-      if(unseen.length<10){seen=[];unseen=[...pool]}
-      round=unseen.sort(()=>Math.random()-.5).slice(0,10).map(shuffleQuestion);
-      seen=[...seen,...round.map(item=>item[0])];
+      round=buildRound(pool,seen);
       localStorage.setItem(historyKey,JSON.stringify(seen));
       index=0;score=0;botScore=0;botChoice=-1;botCorrect=false;locked=false;$("setup").classList.add("hidden");$("result").classList.add("hidden");$("quiz-play").classList.remove("hidden");renderQuestion()
     }
